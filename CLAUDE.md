@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A library of Claude Code skills for a solo visual neuroscience researcher. Skills codify the scientific process — literature discovery, grant writing, experimentation, data analysis, publication — into reusable LLM-assisted workflows. Sources: [obra/superpowers](https://github.com/obra/superpowers) (process skills) and [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) (scientific skills).
 
+## Installation
+
+Symlink this repo to `~/.claude/skills` so Claude Code can discover the skills from any project:
+
+```bash
+ln -s /path/to/llm-skills ~/.claude/skills
+```
+
 ## Architecture
 
 Each skill is a directory at the repo root containing:
