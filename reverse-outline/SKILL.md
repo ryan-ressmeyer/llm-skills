@@ -39,7 +39,9 @@ Present the reverse outline to the user before proceeding to critique.
 
 ### Step 3: Critique the skeleton
 
-Read the flat outline as a standalone argument. Evaluate:
+Read the flat outline as a standalone argument. This is a heavy synthesis task: you must hold the entire argument in mind and evaluate its architecture. **Focus exclusively on structural issues** — problems that require moving, cutting, adding, or reorganizing sections. Do NOT report minor issues (typos, grammar, formatting, citation errors, word choice). Those belong to copy editing and line editing stages. Reporting them here wastes cognitive effort that should go toward deep structural analysis and muddies the value of the review.
+
+Evaluate:
 
 1. **Logical flow:** Does each claim follow from the previous? Are there leaps where intermediate reasoning is missing?
 2. **Gaps:** Are there claims that need to be made but aren't present? Places where the reader would ask "but what about...?"
@@ -49,7 +51,7 @@ Read the flat outline as a standalone argument. Evaluate:
 
 Output the critique as a structured list of issues, each with:
 - **Location:** Which bullet(s) are involved
-- **Severity:** major | moderate | minor
+- **Severity:** major | moderate (no minor — if it's minor, it's not structural)
 - **Type:** gap | redundancy | logical-leap | ordering | balance
 - **Issue:** What the problem is
 
@@ -100,3 +102,4 @@ Present the critique to the user. Ask whether any issues warrant structural revi
 | Writing summaries instead of claims | Extract the argument, not the topic |
 | Skipping critique and just presenting outline | The critique IS the value — outline alone is just compression |
 | Proposing fixes or directions for revision | Identify the issue only — revision planning is the user's and orchestrator's job |
+| Reporting typos, grammar, or formatting issues | These are copy/line-editing concerns — structural review must ignore them entirely |

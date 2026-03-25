@@ -97,6 +97,8 @@ digraph stages {
 
 ### Structural Stage
 
+The structural stage is exclusively about architecture: argument flow, logical gaps, section organization, redundancy, and balance. It is NOT about minor issues (typos, grammar, formatting, citation errors). Those belong to later stages. Structural review is a heavy synthesis task — all cognitive effort should go toward holding the full argument in mind and evaluating its skeleton. Reporting minor issues wastes that effort and muddies the review's value.
+
 1. Invoke `reverse-outline` on the manuscript (dispatch as subagent).
 2. Present the reverse outline and structural critique to the user.
 3. If structural issues are identified:
@@ -113,7 +115,7 @@ digraph stages {
 2. **Dispatch `section-critique` subagents.** For each confirmed section, dispatch a subagent with:
    - The full document (for context)
    - The specific text range to focus on
-   - Instructions to perform believing and doubting passes
+   - Instructions to perform internal and external critique passes
 
 3. **Triage.** Once all critique subagents return, invoke `critique-triage` to synthesize results.
 
@@ -184,3 +186,4 @@ For line editing, dispatch section-critique subagents in parallel when possible.
 | Dispatching too many parallel subagents | Batch sections if >10 subagents would be needed |
 | Not checking for existing reviews | Always check on session start — offer to resume |
 | Mixing critique levels in one pass | Keep structural, line, and copy editing strictly separate |
+| Reporting typos/grammar in structural review | Structural review is architecture only — minor issues belong to copy editing |
