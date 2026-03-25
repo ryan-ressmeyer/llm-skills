@@ -37,10 +37,7 @@ references/<id>/
 
 ### Step 1: Read the PDF
 
-Use Claude's native PDF reading. For papers >10 pages, read in page ranges:
-```
-Read pages 1-10, then 11-20, etc.
-```
+Use Claude's native PDF reading.
 
 Focus on: Abstract, Introduction, Methods, Results, Discussion, Figures.
 
@@ -159,7 +156,7 @@ Present the most relevant candidates:
 - **Distinguish claims from evidence.** "Authors claim X" vs "Data show Y" when they diverge.
 - **Note sample sizes.** N animals, n neurons/trials/subjects.
 - **Report statistics.** p-values, effect sizes, confidence intervals when available.
-- **Flag concerns.** Small N, missing controls, overclaims, circular analyses.
+- **Flag concerns.** Marginal significance, missing controls, overclaims, circular analyses.
 - **Capture subject details.** Species, strain, age, sex, preparation — whatever is relevant.
 - **For computational papers:** Note model assumptions, parameter choices, validation approach.
 

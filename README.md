@@ -1,78 +1,65 @@
 # LLM Skills for Scientific Research
 
-A library of Claude Code skills tailored for a solo visual neuroscience researcher. These skills codify the scientific process — from literature discovery through grant writing, experimentation, data analysis, and publication — into reusable, composable workflows powered by LLM-assisted tooling.
+A library of Claude Code skills tailored for a solo visual neuroscience researcher. These skills codify the scientific process — from literature discovery through data analysis and publication — into reusable, composable workflows powered by LLM-assisted tooling.
 
 ## The Scientific Process & Where Skills Fit
 
 ### Phase 1: Discovery & Background Research
 
-The work starts here — understanding what's known, finding gaps, and forming hypotheses.
+Understanding what's known, finding gaps, and building a literature database.
 
 | Skill | Purpose |
 |-------|---------|
-| **research-lookup** | Real-time literature search via Perplexity Sonar models for quick background checks and citation verification |
-| **citation-management** | Search Google Scholar/PubMed, extract metadata from DOIs/PMIDs, format BibTeX, validate references |
-| **literature-review** | Conduct systematic, multi-database literature reviews with screening, data extraction, synthesis, and PDF generation |
-| **scientific-critical-thinking** | Evaluate methodology rigor, detect biases, assess statistical validity, identify logical fallacies in existing work |
-| **scientific-brainstorming** | Generate novel hypotheses, explore interdisciplinary connections, identify research gaps worth pursuing |
+| **literature-review** | Interactive orchestrator for building a paper database — collecting, summarizing, and synthesizing scientific literature one paper at a time |
+| **citation-fetch** | Retrieve citation metadata (from DOI, PMID, arXiv ID, title, or query), generate BibTeX, and fetch citation graphs (references, cited-by, related) |
+| **pdf-retrieve** | Obtain paper PDFs, checking open-access sources first and prompting the user when paywalled |
+| **paper-summarize** | Read a paper PDF and produce a structured QLMRI summary, then update the literature database |
+| **database-search** | Search the local literature database by metadata, full-text, or citation graph connections |
+| **database-check** | Verify literature database integrity — missing files, inconsistent metadata, orphaned entries |
+| **theme-synthesize** | Create cross-paper thematic synthesis documents tracing how ideas evolved across multiple papers |
+| **citation-management** | Legacy skill — Google Scholar/PubMed search, DOI-to-BibTeX extraction, reference validation |
 
-### Phase 2: Grant Writing & Proposal Development
+### Phase 2: Manuscript Planning & Analysis
 
-Translating ideas and preliminary findings into funded projects.
-
-| Skill | Purpose |
-|-------|---------|
-| **research-grants** | Write competitive proposals for NSF, NIH, DOE, DARPA with agency-specific guidelines, templates, and budget prep |
-| **scientific-writing** | IMRAD-structured prose, citation formatting, reporting guidelines (CONSORT, STROBE, PRISMA) — used here for aims pages and significance sections |
-
-### Phase 3: Experimentation & Data Analysis
-
-Collecting data (primarily from macaque and potentially marmoset visual neurophysiology experiments) and analyzing results.
+Turning data and literature into a manuscript plan before writing prose.
 
 | Skill | Purpose |
 |-------|---------|
+| **manuscript-planning** | Collaborative dialogue to identify the strongest questions data can answer, co-design analyses, and organize findings into a narrative |
 | **systematic-debugging** | Root-cause analysis for experiment code, data pipelines, and analysis scripts — no fixes without investigation first |
 | **test-driven-development** | Write tests first for analysis code, stimulus generation, data processing pipelines |
-| **scientific-visualization** | Publication-quality matplotlib/seaborn/plotly figures with colorblind accessibility, proper resolution, journal-specific formatting |
 
-### Phase 4: Paper Writing & Publication
+### Phase 3: Paper Writing & Revision
 
-Synthesizing everything into manuscripts.
+Drafting, reviewing, and polishing manuscripts.
 
 | Skill | Purpose |
 |-------|---------|
-| **scientific-writing** | Core manuscript skill — full IMRAD structure, two-stage outline-to-prose workflow, field-specific terminology |
-| **scientific-visualization** | Data figures for results sections |
-| **scientific-slides** | Conference talks, seminars, thesis defense presentations via Beamer templates |
-| **citation-management** | Final reference list validation and formatting |
+| **literature-writer** | Write scientific paper sections drawing citations exclusively from the literature database |
+| **manuscript-review** | Orchestrate the full review cycle — structural, line, and copy editing stages with adversarial critique subagents |
+| **reverse-outline** | Compress a manuscript into core claims to expose its logical skeleton, then critique for gaps and logical leaps |
+| **section-critique** | Adversarial critique of a specific section — believing pass (internal consistency) then doubting pass (questioning assertions) |
+| **critique-triage** | Synthesize critiques from multiple section reviews into a deduplicated, prioritized revision plan |
+| **copy-review** | Grammar, punctuation, terminology consistency, and stylistic polish before submission |
+| **style-guide** | Voice standards and AI pattern elimination for all public-facing prose |
 
-### Meta / Process Skills
+### Process / Meta Skills
 
 These skills govern *how* the other skills get used — planning, execution, and quality control.
 
 | Skill | Purpose |
 |-------|---------|
 | **skills-prelude** | Bootstraps skill discovery — ensures relevant skills are invoked before any response |
-| **designing-plans** | General-purpose ideation for features, components, and designs (software-oriented counterpart to scientific-brainstorming) |
+| **designing-plans** | Collaborative ideation for features, components, and designs before implementation |
 | **writing-plans** | Create bite-sized implementation plans with exact file paths and commands before touching code |
 | **executing-plans** | Execute plans task-by-task with review checkpoints across sessions |
-| **dispatching-parallel-agents** | Distribute independent tasks to multiple agents working simultaneously |
 | **verification-before-completion** | No completion claims without fresh verification evidence — the final quality gate |
 | **writing-skills** | TDD-based methodology for creating and testing new skills |
 | **python-environment** | Enforces `uv run` for all Python execution — project code via `pyproject.toml`/`.venv`, skill scripts via PEP 723 inline metadata. No system Python, ever. |
+| **uv-research-workspace** | Create and manage Python research projects as uv workspaces with git sub-repositories |
+| **git-commits** | Commit message formatting — single line, no Co-Authored-By trailer |
 
 ## Skill Sources
 
 - [obra/superpowers](https://github.com/obra/superpowers) — process skills (designing-plans, planning, debugging, TDD, verification)
-- [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) — scientific research skills (writing, visualization, grants, literature review)
-
-## Changelog
-
-- **2026-03-04**: Initial README mapping 20 skills from [superpowers](https://github.com/obra/superpowers) and [claude-code-templates](https://github.com/davila7/claude-code-templates) to a four-phase scientific workflow. Created `python-environment` skill to enforce `uv`-managed Python across all contexts (project code and skill scripts). Added PEP 723 inline metadata to all 11 existing Python scripts. Replaced bare `pip install` references in `citation-management` and `literature-review` SKILL.md files with `uv run` instructions.
-
-## What's Next
-
-- Map skills into concrete end-to-end workflows (e.g., "new project kickoff", "paper revision cycle")
-- Adapt skills for visual neuroscience specifics (ephys data formats, stimulus libraries, animal protocol considerations)
-- Add new skills for gaps in the pipeline (experimental design, statistical analysis planning, peer review response)
-- Develop integration points between skills (e.g., literature review findings flowing into grant aims)
+- [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) — scientific research skills (original templates, since heavily reworked)
