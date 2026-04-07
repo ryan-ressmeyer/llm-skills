@@ -24,6 +24,26 @@ class DatabaseSearcher:
         self.papers: list[dict] = []
         self._load_index()
 
+    def _resolve_summary_path(self, paper: dict) -> Path:
+        """Return summary file path for a paper, honoring entry's summary_path
+        field with fallback to the legacy nested layout."""
+        s = paper.get('summary_path')
+        if s:
+            return self.db / s
+        pid = paper.get('id', '')
+        return self.db / pid / f'{pid}-summary.md'
+
+    def _resolve_graph_dir(self, paper_id: str) -> Path:
+        """Return citation-graph directory for a paper id, honoring entry's
+        graph_dir field with fallback to the legacy nested layout."""
+        for p in self.papers:
+            if p.get('id') == paper_id:
+                g = p.get('graph_dir')
+                if g:
+                    return self.db / g
+                break
+        return self.db / paper_id
+
     def _load_index(self):
         index_path = self.db / 'index.yaml'
         if not index_path.exists():
@@ -112,7 +132,7 @@ class DatabaseSearcher:
 
             # Full-text summary search
             pid = paper.get('id', '')
-            summary_path = self.db / pid / f'{pid}-summary.md'
+            summary_path = self._resolve_summary_path(paper)
             if summary_path.exists() and score == 0:
                 # Only search full text if metadata didn't match
                 try:
@@ -146,7 +166,7 @@ class DatabaseSearcher:
 
     def _search_citation_graph(self, paper_id: str, yaml_key: str, filename: str) -> list[dict]:
         """Find papers connected to a given paper via citation graph files."""
-        folder = self.db / paper_id
+        folder = self._resolve_graph_dir(paper_id)
         fpath = folder / filename
         if not fpath.exists():
             print(f'No {filename} found for {paper_id}', file=sys.stderr)
@@ -265,7 +285,7 @@ def main():
     output_data = {
         'query': args.query,
         'filters': {k: v for k, v in {
-            'subject': args.subject, 'theme': args.theme, 'author': args.author,
+            'subject': args.subject, 'author': args.author,
             'year_min': args.year_min if args.year_min > 0 else None,
             'year_max': args.year_max if args.year_max < 9999 else None,
             'cited_by': args.cited_by, 'cites': args.cites, 'related_to': args.related_to,

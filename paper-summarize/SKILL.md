@@ -20,7 +20,15 @@ Read a paper PDF and produce a structured QLMRI summary, then update the literat
 
 **Database location:** `references/` by default, overridable via CLAUDE.md or user input.
 
-**Paper folder structure:**
+**Layouts:** This skill supports two layouts. The default **nested layout** uses
+one folder per paper. The **flat layout** (used by `obsidian-literature-review`)
+keeps all PDFs in `pdfs/` and one citekey note per paper at the database root.
+`update_index.py` accepts optional `--pdf-path`, `--note-path`, `--summary-path`,
+and `--graph-dir` flags so a caller can record explicit paths instead of relying
+on the nested-layout fallback. Downstream tools (`database-check`,
+`database-search`) honor those fields automatically.
+
+**Paper folder structure (nested layout):**
 ```
 references/<id>/
 ├── <id>.pdf
@@ -113,6 +121,19 @@ uv run ~/.claude/skills/paper-summarize/scripts/update_index.py \
   --has-pdf true \
   --has-summary true
 ```
+
+For flat-layout databases (e.g. the Obsidian vault library), pass explicit
+paths so that `database-check` and `database-search` look in the right places:
+
+```bash
+  --pdf-path "pdfs/smith-jones-2019.pdf" \
+  --note-path "smith-jones-2019.md" \
+  --summary-path "smith-jones-2019.md" \
+  --graph-dir "graph/smith-jones-2019"
+```
+
+When these flags are absent, downstream tools fall back to the nested
+`<id>/<id>.pdf` convention.
 
 ### Step 5: Update references.bib
 

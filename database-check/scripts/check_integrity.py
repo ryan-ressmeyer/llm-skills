@@ -22,6 +22,36 @@ ID_PATTERN = re.compile(r'^[a-z]+-[a-z]+-\d{4}[a-z]?$|^[a-z]+-\d{4}[a-z]?$')
 QLMRI_SECTIONS = ['Citation', 'Questions', 'Logic', 'Methods', 'Results', 'Inferences']
 
 
+def resolve_paths(paper: dict, db: Path) -> dict:
+    """Resolve filesystem paths for a paper entry.
+
+    Reads explicit `pdf_path`, `summary_path`, `note_path`, `graph_dir` fields
+    from the entry when present. Falls back to the legacy nested layout
+    (`<id>/<id>.pdf`, `<id>/<id>-summary.md`, `<id>/`) when fields are absent.
+    """
+    pid = paper.get('id', '')
+    nested_dir = db / pid
+
+    pdf_field = paper.get('pdf_path')
+    summary_field = paper.get('summary_path')
+    note_field = paper.get('note_path')
+    graph_field = paper.get('graph_dir')
+
+    pdf = (db / pdf_field) if pdf_field else (nested_dir / f'{pid}.pdf')
+    summary = (db / summary_field) if summary_field else (nested_dir / f'{pid}-summary.md')
+    note = (db / note_field) if note_field else None
+    graph_dir = (db / graph_field) if graph_field else nested_dir
+
+    return {
+        'id': pid,
+        'pdf': pdf,
+        'summary': summary,
+        'note': note,
+        'graph_dir': graph_dir,
+        'is_flat': bool(pdf_field or note_field or summary_field or graph_field),
+    }
+
+
 class IntegrityChecker:
     """Check literature database integrity."""
 
@@ -77,8 +107,17 @@ class IntegrityChecker:
             })
 
     def _check_folders(self):
-        """Check that all folders match naming convention and have expected files."""
-        skip = {'themes'}
+        """Check legacy nested-layout folders. Skips flat-layout artifacts (pdfs/, etc.)."""
+        # Folders that exist for layout reasons, not as per-paper directories
+        skip = {'themes', 'pdfs', 'graph'}
+        # Build a set of nested-layout dirs that are actually referenced via the
+        # entry's `graph_dir` (which defaults to <id>/ in the nested layout).
+        # We won't flag those, since flat-layout entries may use sibling dirs.
+        index_ids = {p.get('id') for p in self.papers}
+        # Index of explicitly-flat IDs — their nested folder absence is fine
+        flat_ids = {p.get('id') for p in self.papers
+                    if any(k in p for k in ('pdf_path', 'note_path', 'summary_path', 'graph_dir'))}
+
         for item in sorted(self.db.iterdir()):
             if not item.is_dir():
                 continue
@@ -88,13 +127,10 @@ class IntegrityChecker:
 
             # Check naming convention
             if not ID_PATTERN.match(folder_id):
-                self.errors.append({
-                    'type': 'invalid_folder_name',
-                    'message': f'Folder "{folder_id}" does not match firstauthor-seniorauthor-year pattern',
-                    'path': str(item),
-                })
+                # Not a per-paper folder — ignore (likely user organization)
+                continue
 
-            # Check for expected files
+            # Check for expected files (nested layout)
             pdf = item / f'{folder_id}.pdf'
             summary = item / f'{folder_id}-summary.md'
             if not pdf.exists() and not summary.exists():
@@ -105,7 +141,6 @@ class IntegrityChecker:
                 })
 
             # Check for corresponding index entry
-            index_ids = {p.get('id') for p in self.papers}
             if folder_id not in index_ids:
                 self.errors.append({
                     'type': 'orphaned_folder',
@@ -114,29 +149,39 @@ class IntegrityChecker:
                 })
 
     def _check_index_entries(self):
-        """Check that all index entries have corresponding folders."""
+        """Check that resolved paths for each entry exist."""
         for paper in self.papers:
-            pid = paper.get('id', '')
-            folder = self.db / pid
-            if not folder.exists():
-                self.errors.append({
-                    'type': 'missing_folder',
-                    'message': f'Index entry "{pid}" has no corresponding folder',
-                    'path': str(folder),
-                })
+            paths = resolve_paths(paper, self.db)
+            pid = paths['id']
+            # In nested layout, the per-paper folder must exist as the anchor.
+            # In flat layout, we instead require the note (if declared) or pdf to exist.
+            if paths['is_flat']:
+                if paths['note'] is not None and not paths['note'].exists():
+                    self.errors.append({
+                        'type': 'missing_note',
+                        'message': f'Index entry "{pid}" declares note_path but file is missing',
+                        'path': str(paths['note']),
+                    })
+            else:
+                folder = self.db / pid
+                if not folder.exists():
+                    self.errors.append({
+                        'type': 'missing_folder',
+                        'message': f'Index entry "{pid}" has no corresponding folder',
+                        'path': str(folder),
+                    })
 
     def _check_flags(self):
         """Check has_pdf and has_summary flags match reality."""
         for paper in self.papers:
-            pid = paper.get('id', '')
-            folder = self.db / pid
-            if not folder.exists():
-                continue
+            paths = resolve_paths(paper, self.db)
+            pid = paths['id']
 
-            pdf_exists = (folder / f'{pid}.pdf').exists()
-            summary_exists = (folder / f'{pid}-summary.md').exists()
+            pdf_exists = paths['pdf'].exists()
+            summary_exists = paths['summary'].exists()
             has_pdf = paper.get('has_pdf', False)
             has_summary = paper.get('has_summary', False)
+            folder = paths['pdf'].parent
 
             if has_pdf != pdf_exists:
                 self.warnings.append({
@@ -207,8 +252,9 @@ class IntegrityChecker:
     def _check_related_files(self):
         """Check structure of related papers YAML files."""
         for paper in self.papers:
-            pid = paper.get('id', '')
-            folder = self.db / pid
+            paths = resolve_paths(paper, self.db)
+            pid = paths['id']
+            folder = paths['graph_dir']
             if not folder.exists():
                 continue
 
@@ -255,8 +301,9 @@ class IntegrityChecker:
     def _check_summaries(self):
         """Check summary files follow QLMRI structure."""
         for paper in self.papers:
-            pid = paper.get('id', '')
-            summary_path = self.db / pid / f'{pid}-summary.md'
+            paths = resolve_paths(paper, self.db)
+            pid = paths['id']
+            summary_path = paths['summary']
             if not summary_path.exists():
                 continue
             try:

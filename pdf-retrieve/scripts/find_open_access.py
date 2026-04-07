@@ -15,6 +15,7 @@ import json
 import argparse
 import time
 import fcntl
+from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -209,20 +210,82 @@ class OpenAccessFinder:
         }
 
 
+def download_pdf(url: str, output_path: Path, session: requests.Session) -> bool:
+    """Download a PDF from url to output_path. Returns True on success."""
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with session.get(url, stream=True, timeout=60, allow_redirects=True) as resp:
+            resp.raise_for_status()
+            ctype = resp.headers.get('Content-Type', '').lower()
+            # Some hosts redirect HTML landing pages instead of serving PDFs
+            if 'pdf' not in ctype and not url.lower().endswith('.pdf'):
+                # Read first bytes and check magic
+                first = next(resp.iter_content(chunk_size=8), b'')
+                if not first.startswith(b'%PDF'):
+                    print(f'Download error: response is not a PDF (Content-Type: {ctype})', file=sys.stderr)
+                    return False
+                with open(output_path, 'wb') as f:
+                    f.write(first)
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+            else:
+                with open(output_path, 'wb') as f:
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+        # Validate
+        if output_path.stat().st_size < 1024:
+            print(f'Download error: file is suspiciously small ({output_path.stat().st_size} bytes)', file=sys.stderr)
+            return False
+        with open(output_path, 'rb') as f:
+            if not f.read(4).startswith(b'%PDF'):
+                print('Download error: file does not have PDF magic bytes', file=sys.stderr)
+                return False
+        return True
+    except Exception as e:
+        print(f'Download error: {e}', file=sys.stderr)
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Find open-access PDF URLs for a paper',
-        epilog='Example: uv run find_open_access.py --doi 10.1038/s41586-021-03819-2 --email user@uni.edu',
+        description='Find open-access PDF URLs for a paper (and optionally download them)',
+        epilog='Example: uv run find_open_access.py --doi 10.1038/s41586-021-03819-2 --output-path pdfs/smith-2021.pdf',
     )
     parser.add_argument('--doi', required=True, help='DOI of the paper')
     parser.add_argument('--pmid', default='', help='PubMed ID (improves PMC lookup)')
     parser.add_argument('--arxiv', default='', help='arXiv ID (direct PDF available)')
     parser.add_argument('--email', default='', help='Email for Unpaywall API (or set UNPAYWALL_EMAIL)')
-    parser.add_argument('-o', '--output', help='Output file (default: stdout)')
+    parser.add_argument('-o', '--output', help='Output JSON file (default: stdout)')
+    parser.add_argument('--output-path', help='If set, download the best PDF directly to this path. Exits non-zero if no OA PDF was found or download failed.')
     args = parser.parse_args()
 
     finder = OpenAccessFinder(email=args.email)
     results = finder.find_all(doi=args.doi, pmid=args.pmid, arxiv_id=args.arxiv)
+
+    # Optionally download the PDF
+    if args.output_path:
+        if results['open_access_available']:
+            out = Path(args.output_path)
+            # Try sources in priority order until one works
+            downloaded = False
+            for candidate in results['found']:
+                pdf_url = candidate['pdf_url']
+                print(f'Trying {candidate["source"]}: {pdf_url}', file=sys.stderr)
+                if download_pdf(pdf_url, out, finder.session):
+                    results['downloaded'] = True
+                    results['download_path'] = str(out)
+                    results['download_source'] = candidate['source']
+                    downloaded = True
+                    print(f'Downloaded to {out}', file=sys.stderr)
+                    break
+            if not downloaded:
+                results['downloaded'] = False
+                results['download_error'] = 'all sources failed'
+        else:
+            results['downloaded'] = False
+            results['download_error'] = 'no open-access PDF found'
 
     output = json.dumps(results, indent=2)
 
@@ -241,6 +304,10 @@ def main():
         print(f'\nNo open-access PDF found.', file=sys.stderr)
         print(f'DOI link: {results["doi_url"]}', file=sys.stderr)
         print('The user will need to retrieve this paper manually.', file=sys.stderr)
+
+    # Exit code reflects download success when --output-path was requested
+    if args.output_path and not results.get('downloaded'):
+        sys.exit(1)
 
 
 if __name__ == '__main__':

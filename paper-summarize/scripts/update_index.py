@@ -80,6 +80,17 @@ def build_entry(args) -> dict:
     if args.has_summary is not None:
         entry['has_summary'] = args.has_summary.lower() == 'true'
 
+    # Layout-explicit paths (relative to database root). Optional — when absent,
+    # consumers fall back to the nested <id>/<id>.pdf convention.
+    if args.pdf_path:
+        entry['pdf_path'] = args.pdf_path
+    if args.note_path:
+        entry['note_path'] = args.note_path
+    if args.summary_path:
+        entry['summary_path'] = args.summary_path
+    if args.graph_dir:
+        entry['graph_dir'] = args.graph_dir
+
     return entry
 
 
@@ -104,6 +115,14 @@ def main():
     parser.add_argument('--status', choices=['to-read', 'read', 'summarized', 'key-paper'], help='Paper status')
     parser.add_argument('--has-pdf', dest='has_pdf', help='Whether PDF exists (true/false)')
     parser.add_argument('--has-summary', dest='has_summary', help='Whether summary exists (true/false)')
+
+    # Layout-explicit paths (relative to database root). Allow callers to opt out
+    # of the default nested <id>/<id>.pdf convention. When absent, downstream
+    # tooling falls back to that convention for backward compatibility.
+    parser.add_argument('--pdf-path', dest='pdf_path', help='Path to PDF, relative to database root')
+    parser.add_argument('--note-path', dest='note_path', help='Path to per-paper note (e.g. Obsidian citekey note), relative to database root')
+    parser.add_argument('--summary-path', dest='summary_path', help='Path to QLMRI summary file, relative to database root. May equal --note-path if the summary lives inside the note.')
+    parser.add_argument('--graph-dir', dest='graph_dir', help='Directory holding citation graph yaml files (references.yaml, cited-by.yaml, related.yaml), relative to database root')
 
     args = parser.parse_args()
 

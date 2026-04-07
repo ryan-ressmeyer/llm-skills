@@ -24,6 +24,12 @@ Interactive orchestrator for building a paper database one paper at a time. The 
 
 Default: `references/` in the current working directory.
 
+This skill manages **per-project / nested-layout** databases. For the
+Obsidian vault master library (flat layout, citekey notes with embedded PDFs),
+use `obsidian-literature-review` instead — it shares all the same sub-skill
+scripts but passes them explicit `--pdf-path` / `--note-path` / `--summary-path`
+/ `--graph-dir` arguments so they work against the vault layout.
+
 Check `CLAUDE.md` for override:
 ```markdown
 ## Literature Database
