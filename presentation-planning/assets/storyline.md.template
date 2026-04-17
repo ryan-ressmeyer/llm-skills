@@ -1,0 +1,56 @@
+# Storyline — [Talk Title]
+
+## ABT core statement
+> AND [shared context the audience already accepts], BUT [the conflict / gap / problem that makes this interesting], THEREFORE [what the speaker did or concluded].
+
+## Arc
+
+### Hook (~[M] min)
+- [Opening claim / question that the audience already cares about, or can be made to care about in 60 seconds]
+- [Any prerequisite earned here: <concept> → <forward-motion framing>]
+- Beat closes on: [one-sentence setup for the conflict]
+
+### Conflict (~[M] min)
+- [What the field's current answer is, and why it is insufficient]
+- [Any prerequisite earned here]
+- Beat closes on: [one-sentence setup for the resolution]
+
+### Resolution — dives
+
+<!-- The Resolution decomposes into one or more dives. A dive = sub-question → evidence → result → bridge. Let the argument decide the count; do not add dives to fill a quota or collapse real pivots to avoid one. -->
+
+#### Dive 1: [sub-question]
+- Prerequisites earned here: [...]
+- Key evidence: [one-line description of the figure]
+- Result: [one sentence]
+- Bridge: [one sentence to the next dive, or to the Meaning beat if this is the last]
+
+<!-- Add further dives only if the core message actually splits here. -->
+
+#### Dive 2 (optional): [sub-question]
+- Prerequisites earned here: [...]
+- Key evidence: [one-line description of the figure]
+- Result: [one sentence]
+- Bridge: [one sentence]
+
+### Meaning (~[M] min)
+- [World-after-message claim 1 — what changes if this is true]
+- [World-after-message claim 2]
+- [Open question / next direction that sharpens, not dilutes, the core message]
+- Restate ABT.
+
+## Stepping stones — prerequisite earning plan
+
+| Prerequisite (from frame.md Build list) | Earned where | How it's framed as forward motion |
+|-----------------------------------------|--------------|------------------------------------|
+| [concept] | Hook | [sentence the speaker will say when the concept enters] |
+| [concept] | Dive 2 | [sentence] |
+| [...] | | |
+
+## Order check
+- [ ] Question-first opening (not "the goal of this project was…")
+- [ ] First result appears before the midpoint
+- [ ] Dives ordered by logical dependency, not chronology
+- [ ] Closes on implications of the core message, not "Future Directions"
+- [ ] Every Build-list prerequisite has a home in the stepping-stones table
+- [ ] No dive contains two sub-questions or two results (split if so)
