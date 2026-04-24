@@ -1,77 +1,100 @@
-# LLM Skills for Scientific Research
+# agent-config
 
-A library of Claude Code skills tailored for a solo visual neuroscience researcher. These skills codify the scientific process — from literature discovery through data analysis and publication — into reusable, composable workflows powered by LLM-assisted tooling.
+Personal coding-agent configuration for [pi](https://github.com/badlogic/pi-mono) and [Claude Code](https://claude.ai/code).
 
-## The Scientific Process & Where Skills Fit
+Single source of truth for:
+- **Skills** (cross-tool, symlinked into both agents)
+- **Pi extensions, prompts, themes** (pi-only, symlinked into `~/.pi/agent/`)
+- **Global context files** (generated `AGENTS.md` / `CLAUDE.md`)
+- **Settings fragments** (idempotently merged into each tool's settings.json)
+- **Per-machine overrides** (hostname-keyed)
 
-### Phase 1: Discovery & Background Research
+## Install
 
-Understanding what's known, finding gaps, and building a literature database.
+On a fresh machine:
 
-| Skill | Purpose |
-|-------|---------|
-| **literature-review** | Interactive orchestrator for building a paper database — collecting, summarizing, and synthesizing scientific literature one paper at a time |
-| **citation-fetch** | Retrieve citation metadata (from DOI, PMID, arXiv ID, title, or query), generate BibTeX, and fetch citation graphs (references, cited-by, related) |
-| **pdf-retrieve** | Obtain paper PDFs, checking open-access sources first and prompting the user when paywalled |
-| **paper-summarize** | Read a paper PDF and produce a structured QLMRI summary, then update the literature database |
-| **database-search** | Search the local literature database by metadata, full-text, or citation graph connections |
-| **database-check** | Verify literature database integrity — missing files, inconsistent metadata, orphaned entries |
-| **theme-synthesize** | Create cross-paper thematic synthesis documents tracing how ideas evolved across multiple papers |
-| **citation-management** | Legacy skill — Google Scholar/PubMed search, DOI-to-BibTeX extraction, reference validation |
+```bash
+git clone git@github.com:ryan-ressmeyer/agent-config.git ~/code/agent-config
+cd ~/code/agent-config
+./install.sh
+```
 
-### Phase 2: Manuscript Planning & Analysis
+The script is idempotent — re-run it any time after pulling changes.
 
-Turning data and literature into a manuscript plan before writing prose.
+## Layout
 
-| Skill | Purpose |
-|-------|---------|
-| **manuscript-planning** | Collaborative dialogue to identify the strongest questions data can answer, co-design analyses, and organize findings into a narrative |
-| **systematic-debugging** | Root-cause analysis for experiment code, data pipelines, and analysis scripts — no fixes without investigation first |
-| **test-driven-development** | Write tests first for analysis code, stimulus generation, data processing pipelines |
+```
+agent-config/
+├── install.sh                  # entry point
+├── skills/                     # universal; symlinked to ~/.agents/skills and ~/.claude/skills
+├── pi/
+│   ├── extensions/             # pi-only TS extensions
+│   ├── prompts/                # pi-only /slash templates
+│   ├── themes/                 # pi-only themes
+│   ├── settings.fragment.json  # merged into ~/.pi/agent/settings.json
+│   └── keybindings.fragment.json
+├── claude/
+│   └── settings.fragment.json  # merged into ~/.claude/settings.json
+├── shared/
+│   └── AGENTS.md               # common context; prepended into both tools' context files
+├── machines/
+│   ├── default/                # template; copied to machines/<hostname>/ on first install
+│   └── <hostname>/             # per-machine context + settings overrides
+├── scripts/
+│   ├── merge-json.py           # idempotent JSON fragment merger
+│   ├── check-no-secrets.sh     # pre-commit hook
+│   └── ...
+└── docs/                       # design notes and historical plans
+```
 
-### Phase 3: Paper Writing & Revision
+## What `install.sh` does
 
-Drafting, reviewing, and polishing manuscripts.
+1. **Ensures a machine directory exists** for `$HOSTNAME` (copies from `machines/default/` if absent).
+2. **Creates symlinks:**
+   - `skills/` → `~/.claude/skills` and `~/.agents/skills`
+   - `pi/{extensions,prompts,themes}/` → `~/.pi/agent/{extensions,prompts,themes}`
+3. **Generates context files** (NOT symlinks): concatenates `shared/AGENTS.md` + `machines/$HOSTNAME/context.md` into `~/.pi/agent/AGENTS.md` and `~/.claude/CLAUDE.md`.
+4. **Merges settings fragments** idempotently:
+   - `pi/settings.fragment.json` + `machines/$HOSTNAME/settings.fragment.json` → `~/.pi/agent/settings.json`
+   - `pi/keybindings.fragment.json` → `~/.pi/agent/keybindings.json`
+   - `claude/settings.fragment.json` → `~/.claude/settings.json`
+5. **Prompts for the OpenRouter API key** if not already in `~/.pi/agent/auth.json`; writes it with mode 600.
+6. **Installs the pre-commit hook** (`scripts/check-no-secrets.sh`) into this repo's `.git/hooks/`.
 
-| Skill | Purpose |
-|-------|---------|
-| **literature-writer** | Write scientific paper sections drawing citations exclusively from the literature database |
-| **manuscript-review** | Orchestrate the full review cycle — structural, line, and copy editing stages with adversarial critique subagents |
-| **reverse-outline** | Compress a manuscript into core claims to expose its logical skeleton, then critique for gaps and logical leaps |
-| **section-critique** | Adversarial critique of a specific section — believing pass (internal consistency) then doubting pass (questioning assertions) |
-| **critique-triage** | Synthesize critiques from multiple section reviews into a deduplicated, prioritized revision plan |
-| **copy-review** | Grammar, punctuation, terminology consistency, and stylistic polish before submission |
-| **style-guide** | Voice standards and AI pattern elimination for all public-facing prose |
+## Adding new skills, extensions, prompts, themes
 
-### Process / Meta Skills
+Just drop them into the matching directory. The symlinks already resolve.
 
-These skills govern *how* the other skills get used — planning, execution, and quality control.
+- New skill: `skills/<name>/SKILL.md` (+ optional `references/`, `assets/`, `scripts/`)
+- New pi extension: `pi/extensions/<name>.ts` (or directory)
+- New pi prompt: `pi/prompts/<name>.md`
+- New pi theme: `pi/themes/<name>.ts`
 
-| Skill | Purpose |
-|-------|---------|
-| **skills-prelude** | Bootstraps skill discovery — ensures relevant skills are invoked before any response |
-| **designing-plans** | Collaborative ideation for features, components, and designs before implementation |
-| **writing-plans** | Create bite-sized implementation plans with exact file paths and commands before touching code |
-| **executing-plans** | Execute plans task-by-task with review checkpoints across sessions |
-| **verification-before-completion** | No completion claims without fresh verification evidence — the final quality gate |
-| **writing-skills** | TDD-based methodology for creating and testing new skills |
-| **python-environment** | Enforces `uv run` for all Python execution — project code via `pyproject.toml`/`.venv`, skill scripts via PEP 723 inline metadata. No system Python, ever. |
-| **uv-research-workspace** | Create and manage Python research projects as uv workspaces with git sub-repositories |
-| **git-commits** | Commit message formatting — single line, no Co-Authored-By trailer |
+No `install.sh` re-run needed unless you're adding a new symlinked directory.
 
-### Obsidian & Web Content
+## Per-machine customization
 
-Skills for working with Obsidian vaults and extracting web content.
+Edit `machines/<hostname>/context.md` with machine-specific info the agent should know automatically (paths, hardware, use cases).
 
-| Skill | Purpose |
-|-------|---------|
-| **obsidian-cli** | Interact with Obsidian vaults via CLI — read, create, search notes, manage tasks/properties, and develop/debug plugins and themes |
-| **obsidian-markdown** | Create and edit Obsidian Flavored Markdown — wikilinks, embeds, callouts, frontmatter, tags |
-| **obsidian-bases** | Create and edit Obsidian Bases (`.base` files) — views, filters, formulas, summaries for database-like note views |
-| **json-canvas** | Create and edit JSON Canvas (`.canvas`) files — nodes, edges, groups for visual canvases, mind maps, flowcharts |
-| **defuddle** | Extract clean markdown from web pages using Defuddle CLI — use instead of WebFetch for articles, docs, blog posts |
+For per-machine settings overrides (different model, thinking level, permissions), edit `machines/<hostname>/settings.fragment.json`. These merge on top of the base `pi/settings.fragment.json` with fragment values winning.
 
-## Skill Sources
+Re-run `install.sh` after editing machine files to regenerate context and re-merge settings.
 
-- [obra/superpowers](https://github.com/obra/superpowers) — process skills (designing-plans, planning, debugging, TDD, verification)
-- [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) — scientific research skills (original templates, since heavily reworked)
+## Secrets
+
+- **Never** commit `auth.json`, `.env`, or API keys. `.gitignore` and the pre-commit hook both block them.
+- OpenRouter keys live in `~/.pi/agent/auth.json` (mode 600) — populated by `install.sh` on first run.
+
+## Skill index
+
+See `skills/` — each subdirectory is an agent skill with a `SKILL.md`. Skills cover:
+
+- **Literature & research:** `literature-review`, `paper-summarize`, `pdf-retrieve`, `citation-fetch`, `database-search`, `database-check`, `theme-synthesize`, `citation-management`
+- **Writing:** `literature-writer`, `manuscript-planning`, `manuscript-review`, `manuscript-editing`, `reverse-outline`, `section-critique`, `critique-triage`, `copy-review`, `style-guide`, `presentation-planning`
+- **Process & code:** `skills-prelude`, `designing-plans`, `writing-plans`, `executing-plans`, `verification-before-completion`, `writing-skills`, `python-environment`, `uv-research-workspace`, `git-commits`, `systematic-debugging`, `test-driven-development`
+- **Obsidian & web:** `obsidian-cli`, `obsidian-markdown`, `obsidian-bases`, `obsidian-literature-review`, `json-canvas`, `defuddle`
+
+## Sources
+
+- [obra/superpowers](https://github.com/obra/superpowers) — process skills
+- [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) — scientific skills (heavily reworked)

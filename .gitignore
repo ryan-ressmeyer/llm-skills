@@ -1,3 +1,16 @@
+# Secrets — never commit
 .env
-plans
+.env.local
+*.local.json
+auth.json
+credentials.json
+.credentials.json
+
+# Python
 __pycache__/
+*.pyc
+.venv/
+
+# Editor
+.DS_Store
+*.swp
