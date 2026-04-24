@@ -8,11 +8,21 @@ A library of Claude Code skills for a solo visual neuroscience researcher. Skill
 
 ## Installation
 
-Symlink this repo to `~/.claude/skills` so Claude Code can discover the skills from any project:
+Symlink this repo into the appropriate location so your agent harness can discover the skills from any project.
+
+Claude Code (`~/.claude/skills`):
 
 ```bash
-ln -s /path/to/llm-skills ~/.claude/skills
+./install-claude.sh
 ```
+
+pi (`~/.agents/skills` — a location pi discovers natively alongside `~/.pi/agent/skills/`):
+
+```bash
+./install-pi.sh
+```
+
+Either script just creates a symlink; remove the target symlink to reinstall.
 
 ## Architecture
 
